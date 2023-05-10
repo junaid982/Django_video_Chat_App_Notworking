@@ -13,12 +13,15 @@ https://channels.readthedocs.io/en/stable/installation.html
 
 
 install library
->>> python -m pip install -U channels
+>>> python -m pip install -U channels["daphne"]
 
 
 install app in settings.py
 ----------------------------
+
 INSTALLED_APPS = [
+    
+    "daphne",           # django-channels application
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -27,7 +30,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'chat',
     
-    'channels',
 
 ]
 
@@ -63,6 +65,54 @@ settings.py
 
 
 ASGI_APPLICATION = 'mysite.asgi.application'
+
+
+
+#=================================================================================
+
+# define views 
+
+views.py
+---------
+
+
+def main_view(request):
+
+    context = {}
+    return render(request , 'chat/main.html' , context)
+
+
+
+#=================================================================================
+
+# specify URL
+
+application level url
+
+urls.py 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

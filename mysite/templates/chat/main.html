@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -16,13 +17,14 @@
 
     <title>Document</title>
 </head>
+
 <body>
-    <div class="container my-5">
+    <div>
         <h3 id="label-username">Username</h3>
 
         <div class="container my-5">
-            <input type="text" class="form-control w-50 d-inline-block" id="username">
-            <button class="btn btn-success" id="btn-join">Join Room</button>
+            <input type="text" id="username">
+            <button id="btn-join">Join Room</button>
         </div>
 
 
@@ -34,14 +36,14 @@
                 <div>
                     <video id="local-video" style="float: left;" autoplay playsinline></video>
                 </div>
-                <button id="btn-toggle-audio" class="btn btn-secondary">Audio Mute</button>
-                <button id="btn-toggle-video" class="btn btn-secondary">Video Off</button>
+                <button id="btn-toggle-audio">Audio Mute</button>
+                <button id="btn-toggle-video">Video Off</button>
 
             </div>
 
 
             <!-- this container contain remote message  chat videos   -->
-            <div id="chat" class="container my-3">
+            <div id="chat">
 
                 <!-- to receive messages  -->
                 <h3>CHAT</h3>
@@ -50,21 +52,22 @@
                 </div>
 
                 <!-- to send messages  -->
-                <div class="my-4">
-                    <input id="msg">
-                    <button id="btn-send-msg">Send Message</button>
-                </div>
                 <div>
-                    <button id="btn-share-screen">Share Screen</button>
+                    <input id="msg"> <button id="btn-send-msg">Send Message</button>
                 </div>
+                
+                    <button id="btn-share-screen">Share Screen</button>
+                
             </div>
 
         </div>
 
 
     </div>
-    
 
-    <script src="{% static 'js/main.js' %}"></script>
+
+    <script src="{% static 'main.js' %}"></script>
+    
 </body>
+
 </html>
