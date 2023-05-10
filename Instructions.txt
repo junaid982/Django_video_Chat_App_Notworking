@@ -1,0 +1,82 @@
+
+
+create main.html 
+
+#==============================================================================
+
+Setup django-channels
+----------------------
+
+official documentations
+
+https://channels.readthedocs.io/en/stable/installation.html
+
+
+install library
+>>> python -m pip install -U channels
+
+
+install app in settings.py
+----------------------------
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'chat',
+    
+    'channels',
+
+]
+
+
+# past This code inside asgi.py 
+--------------------------------
+
+#remove all existing code inside asgi.py and past this code 
+
+
+import os
+
+from channels.routing import ProtocolTypeRouter
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+# Initialize Django ASGI application early to ensure the AppRegistry
+# is populated before importing code that may import ORM models.
+django_asgi_app = get_asgi_application()
+
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    # Just HTTP for now. (We can add other protocols later.)
+})
+
+
+
+
+Configure our custom channels 
+----------------------------
+
+settings.py
+
+
+ASGI_APPLICATION = 'mysite.asgi.application'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
