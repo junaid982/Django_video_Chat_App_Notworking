@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- css  -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous"> -->
+
+    <!-- js  -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script> -->
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    <title>Document</title>
+</head>
+<body>
+    <div class="container my-5">
+        <h3 id="label-username">Username</h3>
+
+        <div class="container my-5">
+            <input type="text" class="form-control w-50 d-inline-block" id="username">
+            <button class="btn btn-success" id="btn-join">Join Room</button>
+        </div>
+
+
+        <!-- main-grid-container -->
+        <div class="main-grid-container">
+
+            <!-- this container contain local video feature for caller -->
+            <div id="video-container">
+                <div>
+                    <video id="local-video" style="float: left;" autoplay playsinline></video>
+                </div>
+                <button id="btn-toggle-audio" class="btn btn-secondary">Audio Mute</button>
+                <button id="btn-toggle-video" class="btn btn-secondary">Video Off</button>
+
+            </div>
+
+
+            <!-- this container contain remote message  chat videos   -->
+            <div id="chat" class="container my-3">
+
+                <!-- to receive messages  -->
+                <h3>CHAT</h3>
+                <div id="messages">
+                    <ul id="message-list"></ul>
+                </div>
+
+                <!-- to send messages  -->
+                <div class="my-4">
+                    <input id="msg">
+                    <button id="btn-send-msg">Send Message</button>
+                </div>
+                <div>
+                    <button id="btn-share-screen">Share Screen</button>
+                </div>
+            </div>
+
+        </div>
+
+
+    </div>
+    
+</body>
+</html>
