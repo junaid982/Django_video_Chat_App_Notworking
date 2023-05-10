@@ -71,6 +71,29 @@ btnJoin.addEventListener('click' , ()=>{
         console.log('Error Occurred .')
     });
 
-
-
 })
+
+
+
+// setup media stream get audio and video from the local machin 
+
+var localStream = new MediaStream();
+
+const constraints = {
+    'video':true,
+    'audio':true
+}
+
+// access webcam 
+
+const localVideo = document.querySelector('#local-video');
+
+var userMedia =  navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream =>{
+        localStream = stream;
+        localVideo.srcObject = localStream;
+        localVideo.muted = true;
+    })
+    .catch(error =>{
+        console.log('Erro to accessing media Devices ..',error)
+    })
