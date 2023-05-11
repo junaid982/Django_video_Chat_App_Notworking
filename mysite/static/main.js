@@ -11,33 +11,51 @@ var btnJoin = document.querySelector('#btn-join');
 var username;
 var webSocket;
 
-const webSocketOnMessage = (event) =>{
-    var parsedData =JSON.parse(event.data);
+const webSocketOnMessage = (event) => {
+    var parsedData = JSON.parse(event.data);
     var peerUsername = parsedData['peer']
     var action = parsedData['action']
 
-    if (username == peerUsername){
-        return ;
+    if (username == peerUsername) {
+        return;
     }
 
     var receiver_channel_name = parsedData['message']['receiver_channel_name'];
-    if(action == 'new-peer'){
-        createofferer(peerUsername , receiver_channel_name);
-        return ;
+    if (action == 'new-peer') {
+        createofferer(peerUsername, receiver_channel_name);
+        return;
     }
 
-    console.log('Message :' , message)
+    if (action == 'new-offer') {
+        var offer = parsedData['message']['sdp'];
+
+        createAnswerer(offer, peerUsername, receiver_channel_name);
+
+        return;
+    }
+
+    if (action == 'new-answer'){
+        var answer = parsedData['message']['sdp'];
+        var peer = mapPeers[peerUsername][0];
+        peer.setRemoteDescription(answer);
+        return 
+    }
+
+
 }
 
 
 
+// #==========================================================================================
+// 1st method start from here  
+// #==========================================================================================
 
-btnJoin.addEventListener('click' , ()=>{
+btnJoin.addEventListener('click', () => {
     username = usernameInput.value;
 
     // console.log('username :',username)
 
-    if (username == '' ){
+    if (username == '') {
         return;
     }
 
@@ -53,7 +71,7 @@ btnJoin.addEventListener('click' , ()=>{
     var loc = window.location;
     var wsStart = 'ws://';
 
-    if (loc.protocol == 'https:'){
+    if (loc.protocol == 'https:') {
         wsStart = 'wss://'
     }
 
@@ -65,29 +83,31 @@ btnJoin.addEventListener('click' , ()=>{
 
     webSocket = new WebSocket(endPoint);
 
-    webSocket.addEventListener('open',(e)=>{
+    webSocket.addEventListener('open', (e) => {
         console.log('Connection Open .');
-        
-        sendSignal('new-peer' , {});
+
+        sendSignal('new-peer', {});  //caling sendSignal Method
     });
-
-
 
     webSocket.addEventListener('message', webSocketOnMessage);
-    
 
-
-    webSocket.addEventListener('close',(e)=>{
+    webSocket.addEventListener('close', (e) => {
         console.log('Connection closed .')
     });
-    
 
-
-    webSocket.addEventListener('error',(e)=>{
+    webSocket.addEventListener('error', (e) => {
         console.log('Error Occurred .')
     });
 
 })
+
+
+
+
+
+
+
+
 
 
 
@@ -96,8 +116,8 @@ btnJoin.addEventListener('click' , ()=>{
 var localStream = new MediaStream();
 
 const constraints = {
-    'video':true,
-    'audio':true
+    'video': true,
+    'audio': true
 }
 
 // access webcam 
@@ -105,22 +125,67 @@ const constraints = {
 
 const localVideo = document.querySelector('#local-video');
 
-var userMedia =  navigator.mediaDevices.getUserMedia(constraints)
-    .then(stream =>{
+const btnToggleAudio = document.querySelector('#btn-toggle-audio');
+const btnTogglevideo = document.querySelector('#btn-toggle-video');
+
+
+
+var userMedia = navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
         localStream = stream;
         localVideo.srcObject = localStream;
         localVideo.muted = true;
+
+        var audioTracks = stream.getAudioTracks()
+        var videoTracks = stream.getVideoTracks()
+
+        audioTracks[0].enabled = true;
+        videoTracks[0].enabled = true;
+
+
+        // audio mute button 
+        btnToggleAudio.addEventListener('click' , () =>{
+            audioTracks[0].enabled = !audioTracks[0].enabled;
+
+            if(audioTracks[0].enabled){
+                btnToggleAudio.innerHTML = 'Audio Mute';
+                return 
+            }
+            btnToggleAudio.innerHTML = 'Audio Unmute';
+        })
+
+        // video mute button 
+        
+        btnTogglevideo.addEventListener('click' , () =>{
+            videoTracks[0].enabled = !videoTracks[0].enabled;
+
+            if(videoTracks[0].enabled){
+                btnTogglevideo.innerHTML = 'Video Off';
+                return 
+            }
+            btnTogglevideo.innerHTML = 'Video On';
+        })
+
+
+
     })
-    .catch(error =>{
-        console.log('Erro to accessing media Devices ..',error)
+    .catch(error => {
+        console.log('Erro to accessing media Devices ..', error)
     })
 
 
-const sendSignal = (action , message)=>{
+
+
+// #==========================================================================================
+// 2st method start from here  
+// #==========================================================================================
+
+// 2nd method  
+const sendSignal = (action, message) => {
     var jsonStr = JSON.stringify({
-        'peer':username,
-        'action':action,
-        'message':message
+        'peer': username,
+        'action': action,
+        'message': message
     });
 
     webSocket.send(jsonStr);
@@ -130,64 +195,155 @@ const sendSignal = (action , message)=>{
 
 
 // turn serever and strun servers  for multiple devices to connect 
-const createofferer = (peerUsername , receiver_channel_name) =>{
-    var peer = new RTCPeerConnection(null )
+const createofferer = (peerUsername, receiver_channel_name) => {
+    var peer = new RTCPeerConnection(null)
 
     addLocalTracks(peer);
 
     var dc = peer.createDataChannel('channel');
-    dc.addEventListener('open' , () =>{
+    dc.addEventListener('open', () => {
         console.log('connection opened !');
     });
 
-    dc.addEventListener('message' , dcOnMessage)
+    dc.addEventListener('message', dcOnMessage)
 
     var remoteVideo = createVideo(peerUsername);
-    setOnTrack(peer , localStream);
+    setOnTrack(peer, localStream);
 
-    mapPeers[peerUsername] = [peer , dc];
+    mapPeers[peerUsername] = [peer, dc];
 
-    peer.addEventListener('iceconnectionstatechange' , ()=>{
+    peer.addEventListener('iceconnectionstatechange', () => {
         var iceConnectionState = peer.iceConnectionState;
-        if(iceConnectionState === 'failed' || iceConnectionState === 'disconnected' || iceConnectionState === 'closed'){
+        if (iceConnectionState === 'failed' || iceConnectionState === 'disconnected' || iceConnectionState === 'closed') {
             delete mapPeers[peerUsername];
 
-            if(iceConnectionState != 'closed'){
+            if (iceConnectionState != 'closed') {
                 peer.close();
             }
 
-            removeVideo(remoteVideo)
+            removeVideo(remoteVideo);
         }
+    });
+
+    peer.addEventListener('icecandidate', (event) => {
+        if (event.candidate) {
+            console.log('New ice candidate: ', JSON.stringify(peer.localDescription));
+
+            return;
+        }
+
+        sendSignal('new-offer', {
+            'sdp': peer.localDescription,
+            'receiver_channel_name': receiver_channel_name
+        });
+    });
+
+    peer.createOffer()
+        .then(o => peer.setLocalDescription(o))
+        .then(() => {
+            console.log('Local Description set successfully')
+        })
+}
+
+
+
+
+
+
+
+
+const createAnswerer = (offer, peerUsername, receiver_channel_name) => {
+    var peer = new RTCPeerConnection(null)
+
+    addLocalTracks(peer);
+
+
+    var remoteVideo = createVideo(peerUsername);
+    setOnTrack(peer, localStream);
+
+    peer.addEventListener('datachannel', e => {
+        peer.dc = e.channel;
+        peer.dc.addEventListener('open', () => {
+            console.log('connection opened !');
+
+        });
+
+        peer.dc.addEventListener('message', dcOnMessage)
+
+        mapPeers[peerUsername] = [peer, peer.dc];
     })
 
 
+    peer.addEventListener('iceconnectionstatechange', () => {
+        var iceConnectionState = peer.iceConnectionState;
+        if (iceConnectionState === 'failed' || iceConnectionState === 'disconnected' || iceConnectionState === 'closed') {
+            delete mapPeers[peerUsername];
+
+            if (iceConnectionState != 'closed') {
+                peer.close();
+            }
+
+            removeVideo(remoteVideo);
+
+        }
+    });
+
+    peer.addEventListener('icecandidate', (event) => {
+        if (event.candidate) {
+            console.log('New ice candidate: ', JSON.stringify(peer.localDescription));
+
+            return;
+        }
+
+        sendSignal('new-answer', {
+            'sdp': peer.localDescription,
+            'receiver_channel_name': receiver_channel_name
+        });
+    });
+
+    peer.setRemoteDescription(offer)
+        .then(() => {
+            console.log(`Remote description set successfully for ${peerUsername}`)
+            return peer.createAnswer();
+        })
+        .then( a => {
+            console.log('answer created ')
+            peer.setLocalDescription(a)
+        })
 
 }
 
 
-const addLocalTracks = (peer) =>{
+
+
+
+
+
+
+
+const addLocalTracks = (peer) => {
     localStream.getTracks().forEach(track => {
-         peer.addTrack(track , localStream)
+        peer.addTrack(track, localStream)
     });
-    return ;
+    return;
 }
 
 
 
 var messageList = document.querySelector('#message-list');
 
-const dcOnMessage =(event) =>{
+const dcOnMessage = (event) => {
     var message = event.data;
 
     var li = document.createElement('li');
     li.appendChild(document.createTextNode(message));
-    messageList.appendChild(li); 
+    messageList.appendChild(li);
 }
 
 
 
 
-const createVideo = (peerUsername)=>{
+const createVideo = (peerUsername) => {
     var videoContainer = document.querySelector('#video-container');
 
     var remoteVideo = document.createElement('video');
@@ -204,13 +360,13 @@ const createVideo = (peerUsername)=>{
 }
 
 
-const setOnTrack = (peer , remoteVideo) =>{
+const setOnTrack = (peer, remoteVideo) => {
     var remoteStream = new MediaStream();
 
     remoteVideo.srcObject = remoteStream;
 
-    peer.addEventListener('track' , async (event) =>{
-        remoteStream.addTrack(event.track , remoteStream);
+    peer.addEventListener('track', async (event) => {
+        remoteStream.addTrack(event.track, remoteStream);
     })
 }
 
@@ -218,11 +374,14 @@ const setOnTrack = (peer , remoteVideo) =>{
 
 
 
-const removeVideo = (video) =>{
-    var videoWrapper = video.pare
+const removeVideo = (video) => {
+    var videoWrapper = video.parentNode;
+
+    videoWrapper.parentNode.removeChild(videoWrapper);
+
 }
 
- 
+
 
 
 
