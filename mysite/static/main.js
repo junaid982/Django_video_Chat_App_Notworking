@@ -1,5 +1,7 @@
 
 
+var mapPeers = {};
+
 var labelUsername = document.querySelector('#label-username');
 var usernameInput = document.querySelector('#username');
 var btnJoin = document.querySelector('#btn-join');
@@ -11,7 +13,18 @@ var webSocket;
 
 const webSocketOnMessage = (event) =>{
     var parsedData =JSON.parse(event.data);
-    var message = parsedData['message']
+    var peerUsername = parsedData['peer']
+    var action = parsedData['action']
+
+    if (username == peerUsername){
+        return ;
+    }
+
+    var receiver_channel_name = parsedData['message']['receiver_channel_name'];
+    if(action == 'new-peer'){
+        createofferer(peerUsername , receiver_channel_name);
+        return ;
+    }
 
     console.log('Message :' , message)
 }
@@ -54,19 +67,22 @@ btnJoin.addEventListener('click' , ()=>{
 
     webSocket.addEventListener('open',(e)=>{
         console.log('Connection Open .');
-        var jsonStr = JSON.stringify({
-            'message':'This is a message',
-        })
-        // webSocket.send(jsonStr);
-        webSocket.send(jsonStr)
+        
+        sendSignal('new-peer' , {});
     });
+
+
 
     webSocket.addEventListener('message', webSocketOnMessage);
     
+
+
     webSocket.addEventListener('close',(e)=>{
         console.log('Connection closed .')
     });
     
+
+
     webSocket.addEventListener('error',(e)=>{
         console.log('Error Occurred .')
     });
@@ -86,6 +102,7 @@ const constraints = {
 
 // access webcam 
 
+
 const localVideo = document.querySelector('#local-video');
 
 var userMedia =  navigator.mediaDevices.getUserMedia(constraints)
@@ -97,3 +114,120 @@ var userMedia =  navigator.mediaDevices.getUserMedia(constraints)
     .catch(error =>{
         console.log('Erro to accessing media Devices ..',error)
     })
+
+
+const sendSignal = (action , message)=>{
+    var jsonStr = JSON.stringify({
+        'peer':username,
+        'action':action,
+        'message':message
+    });
+
+    webSocket.send(jsonStr);
+}
+
+
+
+
+// turn serever and strun servers  for multiple devices to connect 
+const createofferer = (peerUsername , receiver_channel_name) =>{
+    var peer = new RTCPeerConnection(null )
+
+    addLocalTracks(peer);
+
+    var dc = peer.createDataChannel('channel');
+    dc.addEventListener('open' , () =>{
+        console.log('connection opened !');
+    });
+
+    dc.addEventListener('message' , dcOnMessage)
+
+    var remoteVideo = createVideo(peerUsername);
+    setOnTrack(peer , localStream);
+
+    mapPeers[peerUsername] = [peer , dc];
+
+    peer.addEventListener('iceconnectionstatechange' , ()=>{
+        var iceConnectionState = peer.iceConnectionState;
+        if(iceConnectionState === 'failed' || iceConnectionState === 'disconnected' || iceConnectionState === 'closed'){
+            delete mapPeers[peerUsername];
+
+            if(iceConnectionState != 'closed'){
+                peer.close();
+            }
+
+            removeVideo(remoteVideo)
+        }
+    })
+
+
+
+}
+
+
+const addLocalTracks = (peer) =>{
+    localStream.getTracks().forEach(track => {
+         peer.addTrack(track , localStream)
+    });
+    return ;
+}
+
+
+
+var messageList = document.querySelector('#message-list');
+
+const dcOnMessage =(event) =>{
+    var message = event.data;
+
+    var li = document.createElement('li');
+    li.appendChild(document.createTextNode(message));
+    messageList.appendChild(li); 
+}
+
+
+
+
+const createVideo = (peerUsername)=>{
+    var videoContainer = document.querySelector('#video-container');
+
+    var remoteVideo = document.createElement('video');
+
+    remoteVideo.id = peerUsername + '-video';
+    remoteVideo.autoplay = true;
+    remoteVideo.playsInline = true;
+
+
+    var videoWrapper = document.createElement('div');
+    videoWrapper.appendChild(remoteVideo);
+
+    return remoteVideo;
+}
+
+
+const setOnTrack = (peer , remoteVideo) =>{
+    var remoteStream = new MediaStream();
+
+    remoteVideo.srcObject = remoteStream;
+
+    peer.addEventListener('track' , async (event) =>{
+        remoteStream.addTrack(event.track , remoteStream);
+    })
+}
+
+
+
+
+
+const removeVideo = (video) =>{
+    var videoWrapper = video.pare
+}
+
+ 
+
+
+
+
+
+
+
+
